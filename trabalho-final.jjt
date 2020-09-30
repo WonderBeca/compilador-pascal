@@ -1,0 +1,543 @@
+/*****************************************
+ * DEFINIÇÃO ANALISADOR LEXICO E SINTATICO PARA LIGUAGEM X
+ 	TRABALHO 1 DE COMPILADORES
+ 	NOMES: FILIPE SOUZA CAVALCANTE
+ 	       INGO GUILHERME BOTH EYNG
+ 		   REBECA SOUZA CAVALCANTE
+*
+ *****************************************/
+
+//Opções de config javacc
+options{
+	JAVA_UNICODE_ESCAPE = true;
+	IGNORE_CASE = true;
+ 	STATIC = false;
+}
+
+PARSER_BEGIN(AnalisadorSintatico)
+class AnalisadorSintatico
+{
+	public static void main(String[] args) throws ParseException
+	{
+		try
+		{
+			AnalisadorSintatico analisador = new  AnalisadorSintatico(System.in);
+
+			System.out.println("Reconhecendo tokens: ");
+			//Chamada para o primeiro metodo, inicio da analise
+			SimpleNode root = analisador.start();
+			System.out.println("");
+
+			System.out.println("Arvore: ");
+			//Imprime a arvore
+  	  		root.dump("");
+
+  	  		System.out.println("Analise com sucesso");
+
+		}catch(ParseException e){
+			System.out.println("Erro Encontrado na Analise sintatica");
+			System.out.println(e.getMessage());
+			
+		}catch(TokenMgrError m){
+			System.out.println("Erro Encontrado na Analise lexica");
+			System.out.println(m.getMessage());
+		}
+	}
+}
+PARSER_END(AnalisadorSintatico)
+
+/*****************************************
+ * DEFINICAO DOS TOKENS *
+ *****************************************/
+
+
+SKIP: 
+{
+	" "
+	| "\t"
+	| "\n"
+	| "\r"
+	| "\f"
+}
+
+/* Configuração JAVACC */
+MORE :
+{
+  "//" : IN_SINGLE_LINE_COMMENT
+|
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+|
+  "{" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_SINGLE_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > : DEFAULT
+}
+
+<IN_FORMAL_COMMENT>
+SPECIAL_TOKEN :
+{
+  <FORMAL_COMMENT: "}" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "}" > : DEFAULT
+}
+
+<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >
+}
+
+
+
+
+
+
+
+/* OPERARADORES ARITIMETICOS*/
+TOKEN:
+{
+	<OP_ARITMETICA: "+" 
+	| "-" 
+	| "*" 
+	| "/"> {
+		System.out.println("OP_ARITMETICA -> " + image);
+	}
+}
+/* OPERARADORES LOGICOS */
+
+TOKEN:{
+	<OP_LOGICO: "and" 
+	| "or"
+	| "not">{
+		System.out.println("OP_LOGICO -> " + image);
+	}
+}
+
+/* OPERARADORES RELACIONAL*/
+TOKEN:{
+	<OP_RELACIONAL:"<=" 
+	| "<" 
+	| ">" 
+	|">=" 
+	| "=" 
+	| "<>">{
+		System.out.println("OP_RELACIONAL -> " + image);
+	}
+}
+/* PALAVRAS RESERVADAS*/
+TOKEN:{
+	<TIPO: "integer" 
+	| "char"
+	| "bool"
+	| "string"
+	>{
+		System.out.println("TIPO -> " + image);
+	}
+}
+TOKEN:
+{
+	<BEGIN: "begin">{
+		System.out.println("BEGIN -> " + image);
+	} 
+	|<END: "end">{
+		System.out.println("END -> " + image);
+	} 
+	|<ABRE_PAREN: "(">{
+		System.out.println("ABRE_PAREN -> " + image);
+	} 
+	|<FECHA_PAREN: ")">{
+		System.out.println("FECHA_PAREN -> " + image);
+	} 
+	|<WHILE: "while">{
+		System.out.println("WHILE -> " + image);
+	}
+	|<FOR: "for">{
+		System.out.println("FOR -> " + image);
+	}
+	|<TO: "to">{
+		System.out.println("TO -> " + image);
+	}
+	|<DO: "do">{
+		System.out.println("DO -> " + image);
+	}
+	|<IF: "if">{
+		System.out.println("IF -> " + image);
+	}
+	|<ELSE: "else">{
+		System.out.println("ELSE -> " + image);
+	}
+	|<THEN: "then">{
+		System.out.println("THEN -> " + image);
+	}
+	|<PTO_VIRG: ";">{
+		System.out.println("PTO_VIRG -> " + image);
+	}
+	|<VIRGULA: ",">{
+		System.out.println("VIRGULA -> " + image);
+	}
+	|<FINAL_END: "end.">{
+		System.out.println("FINAL_END -> " + image);
+	}
+	|<VAR: "var">{
+		System.out.println("VAR -> " + image);
+	}
+	|<UNDERLINE: "_">{
+		System.out.println("UNDERLINE -> " + image);
+	}
+	|<DOIS_PTOS: ":">{
+		System.out.println("DOIS_PTOS -> " + image);
+	}
+	|<PROGRAM: "program">{
+		System.out.println("PROGRAM -> " + image);
+	}
+	|<FUNCTION: "function">{
+		System.out.println("FUNCTION -> " + image);
+	}
+	
+	}
+TOKEN:
+{
+	<ATRIBUICAO: ":=">{
+		System.out.println("ATRIBUICAO -> " + image);
+	}
+}
+TOKEN:
+{
+	<MIDDLE_END: <END><PTO_VIRG> >{
+		System.out.println("MIDDLE_END -> " + image);
+	}
+}
+TOKEN:
+{
+	<NUM: (["0"-"9"])+>{
+		System.out.println("NUM -> " + image);
+	}
+}
+TOKEN:
+{
+	<IDENT: (<UNDERLINE>)*(<LETTER>)+((<NUM>)|<LETTER>)* >{
+		System.out.println("IDENT -> " + image);
+	}
+	| <#LETTER: ["a" - "z","A" - "Z"] 
+	>
+
+}
+
+
+/*****************************************
+	Funcao para startar a o analisador lexico
+ *****************************************/
+/*****************************************
+ * A DEFINICAO GRAMATICA LINGUAGEM X COMEÇA AQUI*
+ *****************************************/
+
+void exec () #EXEC : {}
+{
+	( 	<PROGRAM>| <BEGIN> | <END> |  <ABRE_PAREN> | <FECHA_PAREN> | <IF>  | <TO> | <DO> | <VAR> | <FUNCTION> |
+		<WHILE> | <FOR> | <ELSE> |<THEN>| <PTO_VIRG>| <DOIS_PTOS> | <FINAL_END> | <UNDERLINE> |
+		 <IDENT> | <NUM> | <TIPO> | <OP_RELACIONAL> | <OP_LOGICO> | <OP_ARITMETICA> | <VIRGULA>
+	)*
+	<EOF>
+}
+/***********************************************
+ *Funcao para startar a o analisador sintático *
+ ***********************************************/
+
+
+/*
+ *Reconhecedor do começo do programa x, da seguinte forma:
+ *program nome;
+ *em seguida chama o metodo declaração 0 ou mais vezes
+ *e depois a declaração do programa principal que é obrigatória
+ */
+SimpleNode start() #START :{}
+{
+	program() ident() pto_virg() (declaracao())* decla_begin()  <EOF> {return jjtThis;}
+}
+
+/*
+ *Reconhecedor de declaração de funções, variáveis globais ou programa principal
+ *Se for função, chama o metodo decla_function
+ *Se ele achar um token identificado como VAR, vai chamar o metodo decla_var, 
+ *em seguida reconhecer o token MIDDLE_END que sinaliza final de função nesse caso
+ *se não, vai achar o metodo decla_begin que é obrigatório em todo programa da linguagem x
+ */
+void declaracao() #DECLARACAO :{}
+{
+	(decla_function() middle_end() )| (var() decla_var()) 
+}
+
+/*
+ *Reconhece o cabeçalho de função que tem a sintaxe 
+ *function nome (parametros) : tipo_retorno_funçao ;
+ *Se os 3 primeiros tokens forem reconhecidos com sucesso, o metodo listaparam vai ser chamado 0 ou mais vezes
+ *Em seguida, se os 4 proximos tokens forem lidos corretamente, o meodo decla_beginFunc vai ser chamado
+ */
+void decla_function() #DECLA_FUNCTION :{}
+{
+	function() ident() AbreParenteses() (listaparam())FechaParenteses()  dois_ptos() tipo() pto_virg() decla_beginFunc() 
+}
+
+/*
+ *Reconhece os parametros da function
+ *chama a função listaparamHELP se houver mais de um parametro
+ */
+void listaparam() #LISTAPARAM :{}
+{
+	ident() (listaparamHELP())* dois_ptos() tipo()
+}
+
+/*
+ *Loop auxiliar para o reconhecimento de parametros de função
+ */
+void listaparamHELP() #LOOP_PARAM :{}
+{
+	virgula() ident() 
+}
+
+/*
+ *Reconhece o corpo de uma função
+ *Se o token VAR for encotrado, vai chamar o metodo decla_var 1 ou mais vezes
+ */
+void decla_beginFunc() #BEGIN_FUNC :{}
+{
+	((var())? decla_var()) begin() (decla_corpo())* 
+}
+
+/*
+ * Declaração de variáveis *
+ ***************************/
+
+/*
+ *Reconhece declaração de variáveis com a sintaxe:
+ *a,b,c:tipo;
+ */
+void decla_var() #DECLA_VAR :{}
+{
+	ident() (virgula() ident())* dois_ptos() tipo() pto_virg()
+}
+
+/* 
+ *Reconhece o programa principal
+ *chama o metodo decla_corpo para reconhecer as instruções
+ */
+void decla_begin() #DECLA_BEGIN :{}
+{
+	begin() (decla_corpo())* final_end()
+}
+
+/*
+ *Reconhece as instruções de um bloco
+ *usei o terminal PTO_VIRG depois do metodo decla_opr pra deixar o metodo mais "universal"
+ */
+void decla_corpo() #INSTRUCOES :{}
+{
+	decla_opr() pto_virg() | selecao() | decla_for() | decla_while()
+}
+
+/*
+ *Reconhece o comando de atribuição inicial
+ */
+void decla_opr() #OPERACOES :{}
+{
+	ident()	atribuicao() (num() | ident() ) (decla_opr2())*
+}
+
+/*
+ *Loop de operações pra reconhecer expressões matemáticas básicas
+ */
+void decla_opr2() #LOOP_OPR :{}
+{
+	op_aritmetica() ( num() | ident() )
+}
+
+/******************************************************
+ *Reconhecimento if then else e operações relacionais *
+ ******************************************************/
+
+/*
+ *Reconhece a sitaxe do comando if da seguinte forma
+ * IF (operação(es) relacional(is)) THEN BEGIN (instruições) END;
+ */
+void selecao() #SEL_IF :{}
+{
+	func_if() decla_opr_relacional() (decla_opr_relacional2())* then() begin() (decla_corpo_Selecao())* middle_end()
+}
+
+/*
+ *Reconhece a operação relacional do if
+ */
+void decla_opr_relacional() #OP_RELACIONAL :{}
+{
+	AbreParenteses() (ident() | num()) op_relacional() (ident() | num()) FechaParenteses()
+}
+
+/*
+ *Loop de operações relacionais dos operadores lógicos, quando é usado and, or por exemplo
+ */
+void decla_opr_relacional2() #LOOP_RELACIONAL :{}
+{
+	op_logico() decla_opr_relacional()
+}
+
+/*
+ *Reconhece as instruções dentro do bloco do IF
+ */
+void decla_corpo_Selecao() #INSTRUCOES_IF :{}
+{
+	decla_opr() pto_virg() | decla_else() | decla_for() | decla_while()
+}
+
+/*
+ *Reconhece o comando ELSE ou ELSE IF
+ */
+void decla_else() #SEL_ELSE :{}
+{
+	end() func_else() ( (func_if() decla_opr_relacional() then() begin() decla_corpo_Selecao()) | (then() begin() decla_corpo_Selecao()) )
+}
+
+/****************************************
+ * Declaração dos comandos de repetição *
+ ****************************************/
+
+/*
+ *Reconhece o comando for com a seguinte sintaxe:
+ *FOR (inicio) TO (fim) DO BEGIN (instrução) END;
+ */
+void decla_for() #REP_FOR :{}
+{
+	func_for() decla_opr() to() (num() | ident()) func_do() begin() (decla_corpo())* middle_end()
+}
+
+/*
+ *Reconhece o comando while com a seguinte sintaxe:
+ *WHILE (comparação) DO BEGIN (instrução) END;
+ */
+void decla_while() #REP_WHILE :{}
+{
+	func_while() (num() | ident())op_relacional()(num() | ident()) func_do() begin() (decla_corpo())* middle_end()
+}
+
+/*
+ *Metodos abaixo são apenas utilizados apenas levar em um terminal com o respectivo nome do método
+ *Fiz isso afim de deixar a arvore sintática mais informativa
+ */
+void program ()#program:{}
+{
+	<PROGRAM>
+}
+void begin()#begin:{}
+{
+	<BEGIN>
+}
+void end():{}
+{
+	<END>
+}
+
+void AbreParenteses()#abrepar:{}
+{
+	<ABRE_PAREN>
+}
+void FechaParenteses()#fechapar:{}
+{
+	<FECHA_PAREN>
+}
+void func_if()#cond_if:{}
+{
+	<IF>
+}
+void to()#to:{}
+{
+	<TO>
+}
+void func_do()#rep_do:{}
+{
+	<DO>
+}
+void var()#var:{}
+{
+	<VAR>
+}
+void function()#function:{}
+{
+	<FUNCTION>
+}
+void func_while()#rep_while:{}
+{
+	<WHILE>
+}
+void func_for()#rep_for:{}
+{
+	<FOR>
+}
+void func_else()#cond_else:{}
+{
+	<ELSE>
+}
+void then()#then:{}
+{
+	<THEN>
+}
+void pto_virg()#pto_virg:{}
+{
+	<PTO_VIRG>
+}
+void final_end()#endFinal:{}
+{
+	<FINAL_END>
+}
+void underline()#underline:{}
+{
+	<UNDERLINE>
+}
+void ident()#ident:{}
+{
+	<IDENT>
+}
+void num()#num:{}
+{
+	<NUM>
+}
+void tipo()#tipo:{}
+{
+	<TIPO>
+}
+void op_relacional()#op_relacional:{}
+{
+	<OP_RELACIONAL>
+}
+void op_logico()#op_logico:{}
+{
+	<OP_LOGICO>
+}
+
+void op_aritmetica()#op_aritmetica:{}
+{
+	<OP_ARITMETICA>
+}
+void virgula()#virgula:{}
+{
+	<VIRGULA>
+}
+
+void dois_ptos()#dois_ptos:{}
+{
+	<DOIS_PTOS>
+}
+void middle_end()#middle_end:{}
+{
+	<MIDDLE_END>
+}
+
+void atribuicao()#atribuicao:{}
+{
+	<ATRIBUICAO>
+}

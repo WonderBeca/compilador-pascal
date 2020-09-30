@@ -1,0 +1,12 @@
+program Soma;
+
+var
+    x, y, w :integer;
+
+begin
+    x := 1;
+    y = 2;
+
+
+    w := x + y;
+end.
